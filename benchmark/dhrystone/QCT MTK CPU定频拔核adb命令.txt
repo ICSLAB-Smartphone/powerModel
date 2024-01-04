@@ -1,0 +1,128 @@
+高通:
+1.CPU拔核(0~7可以单独设置)
+  adb shell "echo 1 > /sys/devices/system/cpu/cpu0/online"
+  adb shell "echo 0 > /sys/devices/system/cpu/cpu1/online"
+  adb shell "echo 0 > /sys/devices/system/cpu/cpu2/online"
+  adb shell "echo 0 > /sys/devices/system/cpu/cpu3/online"
+  adb shell "echo 0 > /sys/devices/system/cpu/cpu4/online"
+  adb shell "echo 0 > /sys/devices/system/cpu/cpu5/online"
+  adb shell "echo 0 > /sys/devices/system/cpu/cpu6/online"
+  adb shell "echo 0 > /sys/devices/system/cpu/cpu7/online"
+  拔核校验：(查看所有CPU状态) adb shell "cat /sys/devices/system/cpu/cpu[0-7]/online"
+
+3.CPU定频
+  格式:adb shell "echo "频点数值" > /sys/devices/system/cpu/cpu所开启核/cpufreq/scaling_max/min_freq"，
+  例如将超大核定频到2841600
+  adb shell "echo "2841600" > /sys/devices/system/cpu/cpu7/cpufreq/scaling_max_freq"
+  adb shell "echo "2841600" > /sys/devices/system/cpu/cpu7/cpufreq/scaling_min_freq"
+  将大核定频到2419000
+  adb shell "echo "2419000" > /sys/devices/system/cpu/cpu4/cpufreq/scaling_max_freq"
+  adb shell "echo "2419000" > /sys/devices/system/cpu/cpu4/cpufreq/scaling_min_freq"
+  定频校验: adb shell "cat  /sys/devices/system/cpu/cpu7/cpufreq/scaling_cur_freq"
+  
+
+
+MTK:
+1.CPU拔核 
+  6+2结构只开1个大核： adb shell "echo 0 1 > /proc/ppm/policy/ut_fix_core_num" 
+  6+2结构只开1个小核： adb shell "echo 1 0 > /proc/ppm/policy/ut_fix_core_num"
+  6+2结构只开所有核：adb shell "echo 6 2 > proc/ppm/policy/ut_fix_core_num" 
+  4+3+1结构开1个小核： adb shell "echo 1 0 0 > /proc/ppm/policy/ut_fix_core_num" 
+  4+3+1结构开1个中核： adb shell "echo 0 1 0 > /proc/ppm/policy/ut_fix_core_num" 
+  4+3+1结构开1个超大核： adb shell "echo 0 0 1 > /proc/ppm/policy/ut_fix_core_num" 
+  拔核校验：(查看所有CPU状态) adb shell "cat /sys/devices/system/cpu/cpu[0-7]/online"
+
+2.CPU定频
+  固定频率： adb shell "echo  -1 0 > proc/ppm/policy/ut_fix_freq_idx"           （6+2架构：第一个是小核，第二是大核，数字代表档位，-1则不设定）
+  固定频率： adb shell "echo -1 -1 0 > proc/ppm/policy/ut_fix_freq_idx"         （4+3+1架构：第一个是小核，第二是大核、第三是超大核，数字代表档位，-1则不设定）
+  固定频率： adb shell "echo -1 -1 1 > proc/ppm/policy/ut_fix_freq_idx"         （4+3+1架构：第一个是小核，第二是大核、第三是超大核，数字代表档位，-1则不设定）
+  定频校验： adb shell cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq
+             adb shell cat /sys/devices/system/cpu/cpu6/cpufreq/scaling_cur_freq
+			 
+			 
+
+2.高通平台学习资料：
+  https://createpoint.qti.qualcomm.com/dashboard/public/productkit#public/product-kit/search
+  
+3.高通平台
+  拔核(0~7可以单独设置)
+  adb shell "echo 1 > /sys/devices/system/cpu/cpu0/online"
+  adb shell "echo 0 > /sys/devices/system/cpu/cpu1/online"
+  adb shell "echo 0 > /sys/devices/system/cpu/cpu2/online"
+  adb shell "echo 0 > /sys/devices/system/cpu/cpu3/online"
+  adb shell "echo 0 > /sys/devices/system/cpu/cpu4/online"
+  adb shell "echo 0 > /sys/devices/system/cpu/cpu5/online"
+  adb shell "echo 0 > /sys/devices/system/cpu/cpu6/online"
+  adb shell "echo 0 > /sys/devices/system/cpu/cpu7/online"
+  定频(同时设定最大频和最小频)
+  adb shell "echo "2841600" > /sys/devices/system/cpu/cpu7/cpufreq/scaling_max_freq"
+  adb shell "echo "2841600" > /sys/devices/system/cpu/cpu7/cpufreq/scaling_min_freq"
+  查看所有支持的频率
+  adb shell "cat /sys/devices/system/cpu/cpu7/cpufreq/scaling_available_frequencies"
+  查看当前频率(CPU0~7)
+  adb shell "cat  /sys/devices/system/cpu/cpu7/cpufreq/scaling_cur_freq"
+  while true; do cat  /sys/devices/system/cpu/cpu7/cpufreq/scaling_cur_freq; done  >> /sdcard/cpu7.txt &
+  while true; do cat  /sys/devices/system/cpu/cpu4/cpufreq/scaling_cur_freq; done  >> /sdcard/cpu4.txt &
+  while true; do cat /sys/class/devfreq/ddrfreq/cur_freq device; done  >> /sdcard/ddr.txt &
+  adb shell "cat /sys/devices/system/cpu/cpu[0-7]/online"
+
+  while true;do cat /sys/class/devfreq/ddrfreq/cur_freq device;done
+
+5.QCT查看GPU信息(root)
+sys/class/devfreq/gpufreq
+1.Manhattan GFXBench      
+测GPU能效曲线，需要先定频，命令如下：
+查看当前设备GPU可支持的频率：adb shell cat /sys/class/devfreq/5900000.qcom,kgsl-3d0/available_frequencies
+查看当前设备GPU的频率：adb shell cat /sys/class/devfreq/5900000.qcom,kgsl-3d0/cur_freq
+设定当前设备GPU的最大频率：adb shell "echo "650000000" >/sys/class/devfreq/5900000.qcom,kgsl-3d0/max_freq"
+设定当前设备GPU的最小频率：adb shell "echo "650000000" >/sys/class/devfreq/5900000.qcom,kgsl-3d0/min_freq"
+
+6.ADB获取更高分辨率时间单位(ns)
+  adb shell echo $EPOCHREALTIME 
+  while true; do cat  /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq; echo $EPOCHREALTIME;done
+
+  while true; do cat  /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq; sleep 1;done
+
+7.定频绑PID
+adb shell "mkdir /dev/cpuset/test"
+adb shell "echo 0 > /dev/cpuset/test/mems"
+设置跑在哪个核，可以是0-7： adb shell "echo 1 > /dev/cpuset/test/cpus"
+adb shell "echo 9967 > /dev/cpuset/test/cgroup.procs"
+adb shell "cat /dev/cpuset/test/tasks"
+
+
+1.MTK平台学习资料：
+  https://online.mediatek.com/_layouts/15/mol/ui/ext/home.aspx
+ 
+2.CPU拔核 
+  6+2结构只开1个大核： adb shell "echo 0 1 > /proc/ppm/policy/ut_fix_core_num" 
+  6+2结构只开1个小核： adb shell "echo 1 0 > /proc/ppm/policy/ut_fix_core_num"
+  6+2结构只开所有核：adb shell "echo 6 2 > proc/ppm/policy/ut_fix_core_num" 
+  4+3+1结构开小核： adb shell "echo 1 0 0 > /proc/ppm/policy/ut_fix_core_num" 
+  4+3+1结构开中核： adb shell "echo 0 1 0 > /proc/ppm/policy/ut_fix_core_num" 
+  4+3+1结构超大核小核： adb shell "echo 0 0 1 > /proc/ppm/policy/ut_fix_core_num" 
+  adb shell "cat /sys/devices/system/cpu/cpu[0-7]/online"
+
+    3.CPU定频
+ 固定频率： adb shell "echo  -1 0 > proc/ppm/policy/ut_fix_freq_idx"          6+2
+ 
+ 固定频率： adb shell "echo -1 -1 0 > proc/ppm/policy/ut_fix_freq_idx"         （1+3+4架构：第一个是小核，第二是大核、第三是超大核，数字代表档位，-1则不设定）
+  固定频率： adb shell "echo -1 -1 1 > proc/ppm/policy/ut_fix_freq_idx"         （1+3+4架构：第一个是小核，第二是大核、第三是超大核，数字代表档位，-1则不设定）
+  查看频率： adb shell cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq
+             adb shell cat /sys/devices/system/cpu/cpu6/cpufreq/scaling_cur_freq
+
+    4.GPU操作
+  查看GPU支持的频点
+  adb shell "cat /proc/gpufreq/gpufreq_opp_dump"
+  设置GPU频率
+  adb shell "echo 390000 > /proc/gpufreq/gpufreq_opp_freq"
+  查看当前GPU频率
+  adb shell cat /proc/gpufreq/gpufreq_var_dump
+ 
+5.CPU频压曲线
+  adb shell "cat /d/static_power"                                             // 抓静态功耗
+  adb shell cat /proc/cpufreq/MT_CPU_DVFS_B/cpufreq_oppidx                    //查看超大核电压频率
+  adb shell cat /proc/cpufreq/MT_CPU_DVFS_L/cpufreq_oppidx                    //查看大核电压频率
+  adb shell cat /proc/cpufreq/MT_CPU_DVFS_LL/cpufreq_oppidx                   //查看小核电压频率
+  adb shell cat /proc/gpufreq/gpufreq_opp_dump                                //查看GPU支持哪些频率，同时显示的数据有频率、电压、功耗
+  adb shell cat /sys/devices/platform/10012000.dvfsrc/helio-dvfsrc/dvfsrc_opp_table

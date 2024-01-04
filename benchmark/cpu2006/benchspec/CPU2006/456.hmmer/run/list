@@ -1,0 +1,2 @@
+run_base_ref_gcc6-64bit.0000 dir=/data/cpu2006/benchspec/CPU2006/456.hmmer/run/run_base_ref_gcc6-64bit.0000 ext=gcc6-64bit lock=0 mach=default size=ref tune=base type=run username=itadm
+__END__
