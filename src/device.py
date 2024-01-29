@@ -11,8 +11,8 @@ class Device:
     def __init__(self, ip, port, timeout=10):
         self._device = AdbDeviceTcp(ip, port, default_transport_timeout_s=timeout) 
         self._device.connect()
-        
         self._device.root()
+
         ''' Get basic information using adb shell '''
         self._system_version = self.run_shell_cmd("getprop ro.build.version.release")
         self._sdk_version = self.run_shell_cmd("getprop ro.build.version.sdk")

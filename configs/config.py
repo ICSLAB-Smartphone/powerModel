@@ -1,6 +1,6 @@
 import os
 
-ProjectName = "PowerModel"
+ProjectName = "powerModel"
 cur_path =  os.path.abspath(os.path.dirname(__file__))
 RootPath = cur_path[:(cur_path.find(ProjectName) + len(ProjectName) + 1)]
 DataPath = RootPath + "build/data/"
