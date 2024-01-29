@@ -1,0 +1,8 @@
+[36m[2024-01-29 12:05:03] cpuControl.py -> __init__ line:30 [DEBUG] : Set Governor[0m
+[36m[2024-01-29 12:05:03] cpuControl.py -> __init__ line:37 [DEBUG] : UserSpace for 2 Cluster[0m
+[36m[2024-01-29 12:05:04] cpuControl.py -> __init__ line:47 [DEBUG] : Set Min and Max Freq[0m
+[36m[2024-01-29 12:05:04] cpuControl.py -> __init__ line:54 [DEBUG] : Set Freq to Max[0m
+[36m[2024-01-29 12:05:04] powerMonitor.py -> start line:24 [DEBUG] : Start Get Power Thread[0m
+[36m[2024-01-29 12:05:06] powerMonitor.py -> get_power line:35 [DEBUG] : 5000 samples[0m
+[36m[2024-01-29 12:05:06] powerMonitor.py -> stop line:49 [DEBUG] : Stop Get Power Thread[0m
+[36m[2024-01-29 12:05:06] main.py -> main line:23 [DEBUG] : [438.10927903098224][0m
