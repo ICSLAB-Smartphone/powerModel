@@ -65,6 +65,20 @@ class CPUControl:
 		else:  #big.LITTLE
 			self.sbig_clock_list = []
 
+	def set_cpu_clock(self, idx, i):
+		if self.core_type == 2:
+			if idx < 4:
+				self.set_little_cpu_clock(i)
+			else:
+				self.set_big_cpu_clock(i)
+		else:
+			if idx < 4:
+				self.set_little_cpu_clock(i)
+			elif idx < 7:
+				self.set_big_cpu_clock(i)
+			else:
+				self.set_sbig_cpu_clock(i)
+
 
 	def set_little_cpu_clock(self, i):
 		self.little_clk = i
