@@ -6,6 +6,7 @@ class CPUControl:
 	def __init__(self, device):
 		self.device = device
 
+		self.cpu_core_path = "/sys/devices/system/cpu/"
 		little_clock_path = config.CpuFreqPath + "policy0/scaling_available_frequencies"
 		big_clock_path = config.CpuFreqPath + "policy4/scaling_available_frequencies"
 		sbig_clock_path = config.CpuFreqPath + "policy7/scaling_available_frequencies"
@@ -44,7 +45,7 @@ class CPUControl:
 		self.big_clock_list = self.device.run_shell_cmd('cat ' + big_clock_path)
 		self.big_clock_list = self.big_clock_list.split()
 
-		logger.debug("Set Min and Max Freq")
+		logger.debug("Set CPU_Min_FREQ and CPU_Max_Freq")
 		self.device.run_shell_cmd('echo ' + self.little_clock_list[0] + ' > ' + self.little_min_freq)
 		self.device.run_shell_cmd('echo ' + self.little_clock_list[-1] + ' > ' + self.little_max_freq)
 		
@@ -203,3 +204,8 @@ class CPUControl:
 	def get_governor(self):
 		return self.device.run_shell_cmd('cat ' + self.little_governor_path)
 	
+	def disable_cpu(self, cpu_id):
+		self.device.run_shell_cmd("echo 0 > {}cpu{}/online".format(self.cpu_core_path, cpu_id))
+
+	def enable_cpu(self, cpu_id):
+		self.device.run_shell_cmd("echo 1 > {}cpu{}/online".format(self.cpu_core_path, cpu_id))
