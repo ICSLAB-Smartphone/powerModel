@@ -79,6 +79,8 @@ class CPUControl:
 			else:
 				self.set_sbig_cpu_clock(i)
 
+	def set_cpu_freq(self, idx, freq): 
+		self.device.run_shell_cmd("echo {} > {}cpu{}/cpufreq/scaling_setspeed".format(freq, self.cpu_core_path, idx))
 
 	def set_little_cpu_clock(self, i):
 		self.little_clk = i
@@ -209,12 +211,22 @@ class CPUControl:
 		else:
 			return (self.get_little_cpu_clock(), self.get_big_cpu_clock(), self.get_sbig_cpu_clock())
 
+	def get_cpu_clock_by_idx(self, idx):
+		return self.device.run_shell_cmd("cat {}cpu{}/cpufreq/scaling_cur_freq".format(self.cpu_core_path, idx))
+
+	def get_freq_list_by_idx(self, idx):
+		return self.device.run_shell_cmd("cat {}cpu{}/cpufreq/scaling_available_frequencies".format(self.cpu_core_path, idx)).split()
+
 	def set_governor(self, governor):
 		self.device.run_shell_cmd('echo ' + governor + ' > ' + self.little_governor_path)
 		self.device.run_shell_cmd('echo ' + governor + ' > ' + self.big_governor_path)
 		if self.core_type == 3:	# big. Little
 			self.device.run_shell_cmd('echo ' + governor + ' > ' + self.sbig_governor_path)
 		
+	def set_cpu_governor(self, idx, governor):
+		logger.info("echo {} > {}cpu{}/cpufreq/scaling_governor".format(governor, self.cpu_core_path, idx))
+		self.device.run_shell_cmd("echo {} > {}cpu{}/cpufreq/scaling_governor".format(governor, self.cpu_core_path, idx))
+
 	def get_governor(self):
 		return self.device.run_shell_cmd('cat ' + self.little_governor_path)
 	
@@ -223,3 +235,12 @@ class CPUControl:
 
 	def enable_cpu(self, cpu_id):
 		self.device.run_shell_cmd("echo 1 > {}cpu{}/online".format(self.cpu_core_path, cpu_id))
+
+
+	def increase_frequency(indices, increment): 
+		# 根据indices和increment增加CPU频率 
+		pass 
+
+	def decrease_frequency(indices, decrement): 
+		# 根据indices和decrement减少CPU频率 
+		pass 
