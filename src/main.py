@@ -9,16 +9,36 @@ from configs import config
 from device import Device
 from cpuControl import CPUControl
 from powerMonitor import PowerMonitor
+from powerMonitor import PMType
+import curses
 
-def run_stress(benchmark, cpu_mask):
-	subprocess.run(["adb", "shell", "taskset", cpu_mask, "/data/local/tmp/{}".format(benchmark)])
+def run_stress(benchmark, cpu_mask, timeout=10):
+	subprocess.run(["adb", "shell", "nice", "-n", "-20", "taskset", cpu_mask,  "timeout", str(timeout), "/data/local/tmp/{}".format(benchmark)])
 
+def draw_cpu():
+	# Drawing a conceptual diagram of the CPU
+	print("Arm Heterogeneous CPU Structure:")
+	print("┌─────────────────────────┐")
+	print("│ Heterogeneous CPU Cores │")
+	print("├────────────┬────────────┤")
+	print("│	 Big	│	Small   │")
+	print("│  [4 Cores] │   [4 Cores]│")
+	print("│			│			│")
+	print("│	Test	│   Monitor  │")
+	print("│ Program Run│ Program Run│")
+	print("└────────────┴────────────┘")
+
+draw_cpu()
 
 def main():
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--device_id', type=str, default='192.168.1.41')
+	parser.add_argument('--device_id', type=str, default='10.255.4.199')
 	parser.add_argument('--benchmark', type=str, default='dhrystone', choices=[
-		'dhrystone', 'CPU2006'
+		'dhrystone', 'CPU2006', 'dhrystone64_bit.elf'
+	])
+	# the way we measure the power of mobile device
+	parser.add_argument('--power_monitor', type=str, default='hardware', choices=[
+		'hardware', 'software', 'idle'
 	])
 	args = parser.parse_args()
 
@@ -28,12 +48,21 @@ def main():
 
 	benchmark_path = {
 		'dhrystone': config.RootPath + "benchmark/dhrystone/dhrystone",
+		'dhrystone64_bit.elf': config.RootPath + "benchmark/dhrystone/dhrystone64_bit.elf",
 		'CPU2006': config.RootPath + "benchmark/cpu2006/benchspec/CPU2006"
 	}
 	benchmark = args.benchmark
 
+	power_monitor = args.power_monitor
+	if power_monitor == "hardware":
+		pm_type = PMType.Hardware
+	elif power_monitor == "software":
+		pm_type = PMType.Software
+	elif power_monitor == "idle":
+		pm_type = PMType.Idle
+
 	cc = CPUControl(device)
-	pm = PowerMonitor()
+	pm = PowerMonitor(pm_type)
 
 	'''
 	0. setup something for the vendor
@@ -88,7 +117,9 @@ def main():
 	for result in results:
 		if "./" in result:
 			group_name = result[2:]
-			original_cpus[group_name] = device.run_shell_cmd("cat /dev/cpuset/{}/cpus")
+			original_cpus[group_name] = device.run_shell_cmd("cat /dev/cpuset/{}/cpus".format(group_name))
+			logger.info(group_name)
+			logger.info(original_cpus[group_name])
 
 	### pick the cpus where benchmark runs
 	if cc.core_type == 2:
@@ -144,12 +175,16 @@ def main():
 		logger.debug("Benchmark runs on the core {}".format(benchmark_core_idx[i]))
 		cc.enable_cpu(benchmark_core_idx[i])
 		cc.set_cpu_clock(benchmark_core_idx[i], -1)
-		logger.debug("Freq : " + str(cc.get_cpu_clock()[0]))
+		device.run_shell_cmd("echo 1 > /sys/devices/system/cpu/cpu0/core_ctrl/min_cpus")
+		device.run_shell_cmd("echo 1 > /sys/devices/system/cpu/cpu0/core_ctrl/max_cpus")
+		device.run_shell_cmd("echo 1 > /sys/devices/system/cpu/cpu4/core_ctrl/min_cpus")
+		device.run_shell_cmd("echo 1 > /sys/devices/system/cpu/cpu4/core_ctrl/max_cpus")
+
 		logger.info("Online : " + device.run_shell_cmd("cat /sys/devices/system/cpu/online"))
 		logger.info("Offline : " + device.run_shell_cmd("cat /sys/devices/system/cpu/offline"))
 		device.run_shell_cmd("echo {} > /dev/cpuset/test-app/cpus".format(benchmark_core_idx[i]))
 		device.run_shell_cmd("echo 1 > /dev/cpuset/test-app/cpu_exclusive")
-		logger.info(device.run_shell_cmd("find /dev/cpuset/ -name cpus | xargs cat"))
+		#device.run_shell_cmd("ps -o pid,psr,comm,s -A | awk -v a='3' I#)
 
 		### run the test on the core idx
 		pm.start()
@@ -162,12 +197,22 @@ def main():
 		logger.debug("Extra Power : {}".format(extra_power))
 		pm.power_data = []
 
+
+		### Verify the system
+		### 1. /proc/interrupts			   -> CPU online or not
+		### 2. /cpufreq/stat/time_in_state -> freq doesn't change
+
 	'''
 		recover the system
 	'''
 	logger.debug("Recovery System")
 	for i in range(8):
 		cc.enable_cpu(i)
+	### TODO
+	device.run_shell_cmd("echo 0 > /sys/devices/system/cpu/cpu0/core_ctrl/min_cpus")
+	device.run_shell_cmd("echo 4 > /sys/devices/system/cpu/cpu0/core_ctrl/max_cpus")
+	device.run_shell_cmd("echo 0 > /sys/devices/system/cpu/cpu4/core_ctrl/min_cpus")
+	device.run_shell_cmd("echo 4 > /sys/devices/system/cpu/cpu4/core_ctrl/max_cpus")
 
 	device.run_shell_cmd("rm -rf /dev/cpuset/test-app")
 
@@ -175,5 +220,10 @@ def main():
 		device.run_shell_cmd("echo {} > /dev/cpuset/{}/cpus".format(value, key))
 	logger.info(device.run_shell_cmd("find /dev/cpuset/ -name cpus | xargs cat"))
 
+
 if __name__ == '__main__':
-	main()
+	try:
+		#curses.wrapper(main)
+		main()
+	except KeyboardInterrupt:
+		pass
